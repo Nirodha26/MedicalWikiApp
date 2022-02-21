@@ -3,16 +3,18 @@ import {StyleSheet, View} from 'react-native';
 import {SearchBar} from 'react-native-elements';
 import PropTypes from 'prop-types';
 
-function CustomSearchBar(props) {
-  const {placeholder, value, onClearText, onChangeText} = props;
-
+function CustomSearchBar({
+  returnKeyType,
+  placeholder,
+  value,
+  onClearText,
+  onChangeText,
+}) {
   return (
     <View style={styles.searchContainer}>
       <SearchBar
-        {...props}
-        lightTheme
         value={value}
-        returnKeyType="search"
+        returnKeyType={returnKeyType}
         placeholder={placeholder}
         onChangeText={onChangeText}
         onClearText={onClearText}
@@ -62,10 +64,12 @@ CustomSearchBar.propTypes = {
   placeholder: PropTypes.string.isRequired,
   onClearText: PropTypes.func.isRequired,
   value: PropTypes.string,
+  returnKeyType: PropTypes.string,
 };
 
 CustomSearchBar.defaultProps = {
   value: '',
+  returnKeyType: 'search',
 };
 
 export default CustomSearchBar;
