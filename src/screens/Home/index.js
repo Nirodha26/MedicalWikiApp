@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {FlatList, SafeAreaView, StyleSheet, Animated} from 'react-native';
 
 // Constants
@@ -13,6 +13,8 @@ const Home = () => {
   const [filteredDrugs, setFilteredDrugs] = useState([]);
 
   const searchBarPosition = useRef(new Animated.Value(0)).current;
+  const scrollViewStartOffsetY = useRef();
+  const scrollDirection = useRef();
 
   useEffect(() => {
     if (drugs) {
@@ -21,31 +23,37 @@ const Home = () => {
     }
   }, [searchPhrase]);
 
-  let scrollViewStartOffsetY = null;
-  let direction;
-
-  const hideSearchBar = event => {
-    if (searchPhrase === '') {
-      const offsetY = event.nativeEvent.contentOffset.y;
-      if (scrollViewStartOffsetY > offsetY && direction !== 'up') {
-        Animated.timing(searchBarPosition, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }).start();
-        direction = 'up';
-      } else if (scrollViewStartOffsetY < offsetY && direction !== 'down') {
-        Animated.timing(searchBarPosition, {
-          toValue: -50,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
-        direction = 'down';
+  const hideSearchBar = useCallback(
+    event => {
+      if (searchPhrase === '') {
+        const offsetY = event.nativeEvent.contentOffset.y;
+        if (
+          scrollViewStartOffsetY.current > offsetY &&
+          scrollDirection.current !== 'up'
+        ) {
+          Animated.timing(searchBarPosition, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+          scrollDirection.current = 'up';
+        } else if (
+          scrollViewStartOffsetY.current < offsetY &&
+          scrollDirection.current !== 'down'
+        ) {
+          Animated.timing(searchBarPosition, {
+            toValue: -50,
+            duration: 300,
+            useNativeDriver: true,
+          }).start();
+          scrollDirection.current = 'down';
+        }
       }
-    }
-  };
+    },
+    [searchPhrase, searchBarPosition],
+  );
 
-  const renderItem = ({item = {}}) => {
+  const renderItem = useCallback(({item = {}}) => {
     return (
       <DrugItem
         name={item.name}
@@ -54,23 +62,24 @@ const Home = () => {
         released={item.released}
       />
     );
-  };
+  }, []);
 
   const onClearSearchText = () => {
     setSearchPhrase('');
   };
 
+  const onScrollBeginDrag = useCallback(event => {
+    scrollViewStartOffsetY.current = event.nativeEvent.contentOffset.y;
+  }, []);
+
+  const keyExtractor = useCallback(item => item.id, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Animated.View style={{transform: [{translateY: searchBarPosition}]}}>
         <CustomSearchBar
-          clearIcon
-          lightTheme
-          returnKeyType="search"
           placeholder={'Search drugs'}
-          inputStyle={styles.searchBarInputStyle}
           onChangeText={setSearchPhrase}
-          containerStyle={styles.searchBarContainerStyle}
           onClearText={onClearSearchText}
           value={searchPhrase}
         />
@@ -85,11 +94,9 @@ const Home = () => {
         <FlatList
           data={filteredDrugs}
           renderItem={renderItem}
-          keyExtractor={item => item.id}
+          keyExtractor={keyExtractor}
           onScroll={hideSearchBar}
-          onScrollBeginDrag={event => {
-            scrollViewStartOffsetY = event.nativeEvent.contentOffset.y;
-          }}
+          onScrollBeginDrag={onScrollBeginDrag}
         />
       </Animated.View>
     </SafeAreaView>
@@ -105,18 +112,6 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingTop: 10,
-  },
-  item: {
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-  },
-  searchBarInputStyle: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#E1E8EC',
-    color: '#212121',
-    fontSize: 16,
   },
 });
 
