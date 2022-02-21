@@ -1,8 +1,8 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {FlatList, SafeAreaView, StyleSheet, Animated} from 'react-native';
 
-// Constants
-import {drugs} from '../../data/dataset.json';
+// APIs
+import {getDrugData} from '../../services/api';
 
 // Custom components
 import DrugItem from '../../components/DrugItem';
@@ -17,10 +17,8 @@ const Home = () => {
   const scrollDirection = useRef();
 
   useEffect(() => {
-    if (drugs) {
-      const filtered = drugs.filter(drug => drug?.name.includes(searchPhrase));
-      setFilteredDrugs(filtered);
-    }
+    const filteredDrugData = getDrugData(searchPhrase);
+    setFilteredDrugs(filteredDrugData);
   }, [searchPhrase]);
 
   const hideSearchBar = useCallback(
@@ -42,7 +40,7 @@ const Home = () => {
           scrollDirection.current !== 'down'
         ) {
           Animated.timing(searchBarPosition, {
-            toValue: -50,
+            toValue: -60,
             duration: 300,
             useNativeDriver: true,
           }).start();
